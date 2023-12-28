@@ -1,8 +1,7 @@
 ﻿using KDWEBAPI.DBHUBContext;
 using KDWEBAPI.Models;
+using KDWEBAPI.Repository;
 using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace KDWEBAPI.Controllers
 {
@@ -10,58 +9,44 @@ namespace KDWEBAPI.Controllers
     [ApiController]
     public class KDCategoryController : ControllerBase
     {
-        private readonly HBContext _context;
-        public KDCategoryController(HBContext context)
+        private readonly IBaseRepository<KDCategory> _productRepository;
+
+        public KDCategoryController(IBaseRepository<KDCategory> productRepository)
         {
-            _context = context;
+            _productRepository = productRepository;
         }
 
         [HttpGet("List")]
-        public ActionResult<IEnumerable<KDCategory>> List()
+        public async Task<ActionResult> List()
         {
-            return _context.KDCategory.ToList();
+            var productList = await _productRepository.ListAsync();
+            return Ok(productList);
         }
 
         [HttpGet("GetById")]
-        public ActionResult<KDCategory> GetById(int id)
+        public async Task<ActionResult> GetById(int productId)
         {
-            var category = _context.KDCategory.FirstOrDefault(r => r.CategoryID == id);
+            var product = await _productRepository.GetByIdAsync(productId);
 
-            if (category == null)
+            if (product == null)
             {
                 return NotFound();
             }
-
-            return category;
+            return Ok(product);
         }
 
         [HttpPost("Insert")]
-        public ActionResult<KDCategory> Insert(KDCategory product)
+        public async Task<ActionResult> Insert(KDCategory entity)
         {
-            if (product == null)
-            {
-                return BadRequest();
-            }
-            _context.KDCategory.Add(product);
-            _context.SaveChanges();
-
-            return product;
+            var product = await _productRepository.InsertAsync(entity);
+            return Ok(product);
         }
 
         [HttpDelete("Delete")]
-        public ActionResult<KDCategory> DeleteProduct(int id)
+        public async Task<bool> Delete(KDCategory entity)
         {
-            var category = _context.KDCategory.FirstOrDefault(r => r.CategoryID == id);
-
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            _context.KDCategory.Remove(category);
-            _context.SaveChanges();
-
-            return category;
+            await _productRepository.DeleteAsync(entity);
+            return true;
         }
     }
 }

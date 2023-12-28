@@ -1,7 +1,9 @@
 ﻿using KDWEBAPI.DBHUBContext;
 using KDWEBAPI.Models;
+using KDWEBAPI.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace KDWEBAPI.Controllers
 {
@@ -9,71 +11,44 @@ namespace KDWEBAPI.Controllers
     [ApiController]
     public class KDProductController : ControllerBase
     {
-        private readonly HBContext _context;
-        public KDProductController(HBContext context)
+        private readonly IBaseRepository<KDProduct> _productRepository;
+
+        public KDProductController(IBaseRepository<KDProduct> productRepository)
         {
-            _context = context;
+            _productRepository = productRepository;
         }
 
         [HttpGet("List")]
-        public ActionResult<IEnumerable<KDProduct>> List()
+        public async Task<ActionResult> List()
         {
-            List<KDProduct> productList = _context.KDProduct.ToList();
-            List<int?> categoryIdList = productList.Select(r => r.CategoryID).ToList();
-            List<KDCategory> categoryList = _context.KDCategory.Where(r => categoryIdList.Contains(r.CategoryID)).ToList();
-
-            foreach (KDProduct product in productList)
-            {
-                var category = categoryList.FirstOrDefault(r => r.CategoryID == product.CategoryID);
-
-                if (category != null)
-                {
-                    product.CategoryName = category.CategoryName;
-                }
-            }
-
-            return productList;
+            var productList = await _productRepository.ListAsync();
+            return Ok(productList);
         }
 
         [HttpGet("GetById")]
-        public ActionResult<KDProduct> GetById(int productId)
+        public async Task<ActionResult> GetById(int productId)
         {
-            var product = _context.KDProduct.FirstOrDefault(r => r.ProductID == productId);
+            var product = await _productRepository.GetByIdAsync(productId);
 
             if (product == null)
             {
                 return NotFound();
             }
-            return product;
+            return Ok(product);
         }
 
         [HttpPost("Insert")]
-        public ActionResult<KDProduct> Insert(KDProduct product)
+        public async Task<ActionResult> Insert(KDProduct entity)
         {
-            if (product == null)
-            {
-                return BadRequest();
-            }
-            _context.KDProduct.Add(product);
-            _context.SaveChanges();
-
-            return product;
+            var product = await _productRepository.InsertAsync(entity);
+            return Ok(product);
         }
 
         [HttpDelete("Delete")]
-        public ActionResult<KDProduct> DeleteProduct(int productId)
+        public async Task<bool> Delete(KDProduct entity)
         {
-            var product = _context.KDProduct.FirstOrDefault(r => r.ProductID == productId);
-
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            _context.KDProduct.Remove(product);
-            _context.SaveChanges();
-
-            return product;
+            await _productRepository.DeleteAsync(entity);
+            return true;
         }
     }
 }
