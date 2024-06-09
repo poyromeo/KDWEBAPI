@@ -9,9 +9,12 @@ namespace KDWEBAPI.DBHUBContext
         {
 
         }
-
         public DbSet<KDProduct> KDProduct { get; set; }
 
         public DbSet<KDCategory> KDCategory { get; set; }
+
+        public DbSet<KDSwiper> KDSwiper { get; set; }
+
+        public DbSet<KDPointTable> KDPointTable { get; set; }
     }
 }
